@@ -5,7 +5,7 @@
 #ifndef LAB1_MAGMACIPHER_H
 #define LAB1_MAGMACIPHER_H
 
-#include <string>
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <sstream>
@@ -17,11 +17,14 @@ class MagmaCipher {
 
     string filePath;
     string key;
-    std::vector<unsigned char> buffer;
+    vector<vector<unsigned char>> blocks;
+    vector<uint32_t> keyNumbers;
+
 
     void Read();
+    vector<uint32_t> GetKeyNumbers();
 
-    std::uint32_t ReadU32(vector<unsigned char>::iterator& iter);
+    static std::uint32_t ReadU32(vector<unsigned char>::iterator& iter);
 
 public:
     MagmaCipher();
