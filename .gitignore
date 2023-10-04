@@ -9,6 +9,6 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
-/MagmaCipher/.idea/
-/MagmaCipher/cmake-build-debug
-/MagmaCipher/CMakeLists.txt
+/*/.idea/
+/*/cmake-build-debug
+/*/CMakeLists.txt
