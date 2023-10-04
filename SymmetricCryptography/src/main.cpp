@@ -4,5 +4,6 @@
 int main() {
     SymmetricCryptography cryptography;
     cryptography.Encrypt();
+    cryptography.Decrypt();
     return 0;
 }
