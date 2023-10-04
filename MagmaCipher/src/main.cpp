@@ -8,5 +8,8 @@ int main() {
     magma.Encrypt();
     magma.Decrypt();
     cout << "Done" << endl;
+
     return 0;
+
+
 }
