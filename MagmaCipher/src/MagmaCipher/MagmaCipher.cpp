@@ -47,8 +47,10 @@ void MagmaCipher::Read() {
 
     //Split byte array to 64-bits blocks
     //Inserting them to array
+    auto iter = buffer.begin();
     for(int i = 0; i < buffer.size(); i+=8) {
-        this->blocks.emplace_back(buffer.begin(), buffer.begin() + 8);
+        this->blocks.emplace_back(iter, iter + 8);
+        iter+=8;
     }
 }
 
