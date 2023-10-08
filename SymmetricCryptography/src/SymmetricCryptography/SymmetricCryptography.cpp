@@ -187,9 +187,9 @@ uint32_t SymmetricCryptography::H(uint32_t value) {
     //Splitting uint32_t to vector of 4 bytes
     vector<unsigned char> bytes = GetBytes(value);
 
-    for(uint32_t byte: bytes){
+    for(unsigned char& byte: bytes){
         uint32_t left = byte >> 4;
-        uint32_t right = (byte << 28) >> 28;
+        uint32_t right = byte & 0x0F;
         byte = H_table[left][right];
     }
     return ReadU32(bytes.begin());
