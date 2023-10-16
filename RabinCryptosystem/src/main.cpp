@@ -1,0 +1,6 @@
+#include "RabinCryptosystem/RabinCryptosystem.h"
+
+int main() {
+
+    return 0;
+}
