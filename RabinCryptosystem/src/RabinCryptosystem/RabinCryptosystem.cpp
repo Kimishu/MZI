@@ -40,9 +40,7 @@ bool RabinCryptosystem::Write() {
     ofstream out(this->filePath);
     for(unsigned char& byte: data){
         out << byte;
-        cout << (::uint8_t)byte;
     }
-    cout << endl;
     return true;
 }
 
@@ -72,12 +70,29 @@ void RabinCryptosystem::Algorithm(bool mode) {
         //Reading two bytes
         auto iter = data.begin();
         for(int i = 0; i < data.size(); i+=2) {
-            //Block size = 128 bit = 16 byte
             extendedData.push_back(ReadU16(iter));
             iter+=2;
         }
 
-        cout << "Meme" << endl;
+
+        pair<uint32_t, uint32_t> roots = EuclidAlgorithm(p,q);
+
+        data.clear();
+        for(unsigned short& number : extendedData){
+            vector<unsigned short> shortVars = Decrypt(number);
+            vector<pair<unsigned char, unsigned char>> vars;
+
+            transform(shortVars.begin(), shortVars.end(), std::back_inserter(vars),
+                           [this](unsigned short& value) {
+                               auto vec = GetBytes(value);
+                               return std::make_pair(vec[0], vec[1]);
+                           });
+            for (const auto& pair : vars) {
+                if (pair.second == 0) {
+                    data.push_back(pair.first);
+                }
+            }
+        }
     }
 }
 
@@ -89,7 +104,6 @@ bool RabinCryptosystem::Encrypt() {
 }
 
 bool RabinCryptosystem::Decrypt() {
-    Read();
     Algorithm(false);
     Write();
     return false;
@@ -112,7 +126,7 @@ vector<unsigned char> RabinCryptosystem::GetBytes(uint16_t number) {
     return result;
 }
 
-pair<uint32_t, uint32_t> RabinCryptosystem::EuclidAlgorithm() {
+pair<uint32_t, uint32_t> RabinCryptosystem::EuclidAlgorithm(int p, int q) {
     uint32_t x0 = 1;
     uint32_t x1 = 0;
 
@@ -137,6 +151,48 @@ pair<uint32_t, uint32_t> RabinCryptosystem::EuclidAlgorithm() {
     }
 
     return make_pair(x0, y0);
+}
+
+double RabinCryptosystem::ModularSqrt(double b, double k, int m) {
+    int i = 0;
+    double a = 1;
+    vector<double> t;
+    while (k > 0)
+    {
+        t.push_back(fmod(k, 2));
+        k = (k - t[i]) / 2;
+        i++;
+    }
+    for (int j = 0; j < i; j++)
+    {
+        if (t[j] == 1)
+        {
+            a = fmod((a * b), m);
+            b = fmod((b * b), m);
+        }
+        else
+        {
+            b = fmod((b * b), m);
+        }
+    }
+    return a;
+}
+
+vector<unsigned short> RabinCryptosystem::Decrypt(unsigned short &number) {
+    unsigned short m_p = ModularSqrt(number, (p + 1) / 4, p);
+    unsigned short m_q = ModularSqrt(number, (q + 1) / 4, q);
+
+    unsigned short x1 = (roots.first * p * m_q + roots.second * q * m_p) % (p * q);
+    unsigned short x3 = (roots.first * p * m_q - roots.second * q * m_p) % (p * q);
+    unsigned short x2 = (p * q - x1);
+    unsigned short x4 = (p * q - x3);
+
+    return vector<unsigned short>{
+            static_cast<unsigned short>(x1 < 0 ? p*q + x1 : x1),
+            x2,
+            static_cast<unsigned short>(x3 < 0 ? p * q + x3 : x3),
+            x4
+    };
 }
 
 

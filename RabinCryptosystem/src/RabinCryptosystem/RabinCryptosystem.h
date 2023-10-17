@@ -8,21 +8,26 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cmath>
+#include <algorithm>
 
 using namespace std;
 
 class RabinCryptosystem {
     string filePath;
-    uint32_t p,q;
+    static uint32_t p,q;
 
     vector<unsigned char> data;
+    pair<uint32_t, uint32_t> roots;
 
     uint16_t ReadU16(vector<unsigned char>::iterator iter);
     vector<unsigned char> GetBytes(uint16_t number);
 
     ///Main algorithm
-    pair<uint32_t, uint32_t> EuclidAlgorithm();
+    pair<uint32_t, uint32_t> EuclidAlgorithm(int p, int q);
+    double ModularSqrt(double b, double k, int m);
     void Algorithm(bool mode);
+    vector<unsigned short> Decrypt(unsigned short& number);
     bool Read();
     bool Write();
 public:
