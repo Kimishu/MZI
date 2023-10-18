@@ -1,16 +1,18 @@
 //
-// Created by Grimlock on 16.10.2023.
+// Created by Kimihito on 16.10.2023.
 //
 
 #include "RabinCryptosystem.h"
-
-#include <utility>
 
 RabinCryptosystem::RabinCryptosystem() {
     this->filePath = R"(..\data\input.txt)";
 }
 
-RabinCryptosystem::RabinCryptosystem(uint32_t p, uint32_t q): RabinCryptosystem() {
+RabinCryptosystem::RabinCryptosystem(int p, int q): RabinCryptosystem() {
+    if(!(IsPrime(p) && p % 4 == 3) && !(IsPrime(q) && q % 4 == 3)){
+        cerr << "Use prime numbers!\n1. P and Q are prime numbers\n2. P mod 4 == 3 == Q mod 4" << endl;
+        exit(1);
+    }
     this->p = p;
     this->q = q;
 }
@@ -19,11 +21,9 @@ RabinCryptosystem::RabinCryptosystem(string filePath) {
     this->filePath = std::move(filePath);
 }
 
-RabinCryptosystem::RabinCryptosystem(string filePath, uint32_t p, uint32_t q) {
-}
-
 RabinCryptosystem::~RabinCryptosystem() {
-    cout << "Done" << endl;
+    cout << "\nThanks for using Rabin Cryptosystem v1.0" <<
+         "\nBy Kimihito" << endl;
 }
 
 bool RabinCryptosystem::Read() {
@@ -74,22 +74,21 @@ void RabinCryptosystem::Algorithm(bool mode) {
             iter+=2;
         }
 
-
-        pair<uint32_t, uint32_t> roots = EuclidAlgorithm(p,q);
+        roots = EuclidAlgorithm(this->p,this->q);
 
         data.clear();
         for(unsigned short& number : extendedData){
-            vector<unsigned short> shortVars = Decrypt(number);
-            vector<pair<unsigned char, unsigned char>> vars;
+            vector<unsigned short> unproofedRemainders = ChineseRemainderTheorem(number);
+            vector<pair<unsigned char, unsigned char>> proofedRemainders;
 
-            transform(shortVars.begin(), shortVars.end(), std::back_inserter(vars),
+            transform(unproofedRemainders.begin(), unproofedRemainders.end(), std::back_inserter(proofedRemainders),
                            [this](unsigned short& value) {
                                auto vec = GetBytes(value);
                                return std::make_pair(vec[0], vec[1]);
                            });
-            for (const auto& pair : vars) {
-                if (pair.second == 0) {
-                    data.push_back(pair.first);
+            for (const auto& splittedRemainder : proofedRemainders) {
+                if (splittedRemainder.second == 0) {
+                    data.push_back(splittedRemainder.first);
                 }
             }
         }
@@ -104,6 +103,7 @@ bool RabinCryptosystem::Encrypt() {
 }
 
 bool RabinCryptosystem::Decrypt() {
+    Read();
     Algorithm(false);
     Write();
     return false;
@@ -127,11 +127,11 @@ vector<unsigned char> RabinCryptosystem::GetBytes(uint16_t number) {
 }
 
 pair<uint32_t, uint32_t> RabinCryptosystem::EuclidAlgorithm(int p, int q) {
-    uint32_t x0 = 1;
-    uint32_t x1 = 0;
+    int x0 = 1;
+    int x1 = 0;
 
-    uint32_t y0 = 0;
-    uint32_t y1 = 1;
+    int y0 = 0;
+    int y1 = 1;
 
     while (q != 0)
     {
@@ -154,45 +154,54 @@ pair<uint32_t, uint32_t> RabinCryptosystem::EuclidAlgorithm(int p, int q) {
 }
 
 double RabinCryptosystem::ModularSqrt(double b, double k, int m) {
-    int i = 0;
-    double a = 1;
-    vector<double> t;
-    while (k > 0)
-    {
-        t.push_back(fmod(k, 2));
-        k = (k - t[i]) / 2;
-        i++;
+
+    double result = 1.0;
+
+    for(int i = 0; i < k; i++){
+        result = fmod((result * b),m);
     }
-    for (int j = 0; j < i; j++)
-    {
-        if (t[j] == 1)
-        {
-            a = fmod((a * b), m);
-            b = fmod((b * b), m);
-        }
-        else
-        {
-            b = fmod((b * b), m);
-        }
-    }
-    return a;
+
+    return result;
 }
 
-vector<unsigned short> RabinCryptosystem::Decrypt(unsigned short &number) {
-    unsigned short m_p = ModularSqrt(number, (p + 1) / 4, p);
-    unsigned short m_q = ModularSqrt(number, (q + 1) / 4, q);
+vector<unsigned short> RabinCryptosystem::ChineseRemainderTheorem(unsigned short &number) {
+    double m_p = ModularSqrt(number, (p + 1) / 4, p);
+    double m_q = ModularSqrt(number, (q + 1) / 4, q);
 
-    unsigned short x1 = (roots.first * p * m_q + roots.second * q * m_p) % (p * q);
-    unsigned short x3 = (roots.first * p * m_q - roots.second * q * m_p) % (p * q);
-    unsigned short x2 = (p * q - x1);
-    unsigned short x4 = (p * q - x3);
+    double x1 = fmod((roots.first * p * m_q + roots.second * q * m_p), (p * q));
+    x1 = (x1 < 0) ? p*q + x1 : x1;
+    double x2 = (p * q - x1);
+    double x3 = fmod((roots.first * p * m_q - roots.second * q * m_p), (p * q));
+    x3 = (x3 < 0) ? p * q + x3 : x3;
+    double x4 = (p * q - x3);
 
     return vector<unsigned short>{
-            static_cast<unsigned short>(x1 < 0 ? p*q + x1 : x1),
-            x2,
-            static_cast<unsigned short>(x3 < 0 ? p * q + x3 : x3),
-            x4
+            (unsigned short)x1,
+            (unsigned short)x2,
+            (unsigned short)x3,
+            (unsigned short)x4
     };
+}
+
+bool RabinCryptosystem::IsPrime(int &number) {
+    if (number <= 1) {
+        return false; // Числа меньше или равные 1 не являются простыми.
+    }
+    if (number <= 3) {
+        return true; // 2 и 3 - простые числа.
+    }
+    if (number % 2 == 0 || number % 3 == 0) {
+        return false; // Если число делится на 2 или 3 без остатка, оно не простое.
+    }
+
+    // Проверяем делителей, начиная с 5.
+    for (int i = 5; i * i <= number; i += 6) {
+        if (number % i == 0 || number % (i + 2) == 0) {
+            return false;
+        }
+    }
+
+    return true; // Если не найдено делителей, то число простое.
 }
 
 

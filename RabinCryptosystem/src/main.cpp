@@ -1,9 +1,8 @@
 #include "RabinCryptosystem/RabinCryptosystem.h"
 
 int main() {
-    RabinCryptosystem cryptosystem(7,11);
+    RabinCryptosystem cryptosystem(239,283);
     cryptosystem.Encrypt();
-
-    //cryptosystem.Decrypt();
+    cryptosystem.Decrypt();
     return 0;
 }
