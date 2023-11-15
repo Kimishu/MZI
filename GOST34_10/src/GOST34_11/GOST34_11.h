@@ -2,8 +2,8 @@
 // Created by Kimihito on 31.10.2023.
 //
 
-#ifndef GOST34_11_GOST34_11_H
-#define GOST34_11_GOST34_11_H
+#ifndef GOST34_10_GOST34_11_H
+#define GOST34_10_GOST34_11_H
 
 #include <string>
 #include <iostream>
@@ -223,4 +223,4 @@ public:
 };
 
 
-#endif //GOST34_11_GOST34_11_H
+#endif //GOST34_10_GOST34_11_H
