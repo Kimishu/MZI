@@ -7,23 +7,23 @@
 
 GOST34_10::GOST34_10() {
     this->filePath = R"(..\data\input.txt)";
+    pPoint = ElepticCurvePoint(xp,yp,a,b,p);
 }
 
 GOST34_10::GOST34_10(std::string filePath) {
     this->filePath = std::move(filePath);
+    pPoint = ElepticCurvePoint(xp,yp,a,b,p);
 }
 
 GOST34_10::~GOST34_10() = default;
 
 string GOST34_10::GetSignature() {
-    string hash = GetHash();
-    string binaryVec = HexToBinary(hash);
-    BigInteger alpha = BinaryToBigInteger(binaryVec);
+    BigInteger alpha = BinaryToBigInteger(HexToBinary(GetHash()));
     BigInteger e = alpha % q;
-    //BigInteger e = "20798893674476452017134061561508270130637142515379653289952617252661468872421";
     if(e == to_bigint(0))
         e = 1;
-    BigInteger k = BigInteger::_rand_bigint(0,q);
+    BigInteger k = BigInteger::rand_bigint(0,q);
+    ElepticCurvePoint elepticCurvePoint = ElepticCurvePoint::Multiply(k, pPoint);
     cout << endl;
     return "";
 }

@@ -209,7 +209,18 @@ public:
         return ans;
     }
 
+    BigInteger operator - (BigInteger const &n) const {
+        BigInteger ans;
+        ans.str = subtract(str, n.str);
+        return ans;
+    }
+
     friend BigInteger operator - (BigInteger const &n1, int n2) {
+        BigInteger ans;
+        ans.str = subtract(n1.str, std::to_string(n2));
+        return ans;
+    }
+    friend BigInteger operator - (BigInteger &n1, int n2) {
         BigInteger ans;
         ans.str = subtract(n1.str, std::to_string(n2));
         return ans;
@@ -301,6 +312,11 @@ public:
         return ans;
     }
     friend BigInteger operator / (BigInteger const &n1, int n2) {
+        BigInteger ans;
+        ans.str = divide(n1.str, std::to_string(n2));
+        return ans;
+    }
+    friend BigInteger operator / (BigInteger  &n1, int n2) {
         BigInteger ans;
         ans.str = divide(n1.str, std::to_string(n2));
         return ans;
@@ -481,6 +497,9 @@ public:
     friend bool operator < (BigInteger const &n1, int n2) {
         return is_strictlyMinimum(n1.str, std::to_string(n2));
     }
+    friend bool operator < (BigInteger &n1, int n2) {
+        return is_strictlyMinimum(n1.str, std::to_string(n2));
+    }
     friend bool operator < (int n1, BigInteger const &n2) {
         return is_strictlyMinimum(std::to_string(n1), n2.str);
     }
@@ -581,6 +600,9 @@ public:
         return (*this).str != n.str;
     }
     friend bool operator != (BigInteger const &n1, int n2) {
+        return n1.str != std::to_string(n2);
+    }
+    friend bool operator != (BigInteger &n1, int n2) {
         return n1.str != std::to_string(n2);
     }
     friend bool operator != (int n1, BigInteger const &n2) {
