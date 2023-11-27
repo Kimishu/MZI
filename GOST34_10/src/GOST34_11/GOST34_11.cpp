@@ -13,7 +13,6 @@ GOST34_11::GOST34_11(string &filePath) {
 }
 
 GOST34_11::~GOST34_11() {
-    cout << "Thanks for using GOST 34.11\nMade by Kimihito\n";
 }
 
 string GOST34_11::GetHash() {
@@ -55,6 +54,11 @@ void GOST34_11::Algorithm() {
     e = ModularPlus(e, m);
     h = g(vector<unsigned char>(64,0), h, N);
     h = g(vector<unsigned char>(64,0), h, e);
+
+    /*
+    h = vector<unsigned char>(h.begin(), h.begin()+(h.size()/2));
+    h[31] = 0;
+    */
 
     stringstream hashStringStream;
 

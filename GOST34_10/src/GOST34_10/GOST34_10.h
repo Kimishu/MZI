@@ -7,6 +7,7 @@
 
 #include <utility>
 #include <random>
+#include <fstream>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/random_number_generator.hpp>
@@ -15,10 +16,12 @@
 
 namespace BigInteger{
     using namespace boost::multiprecision;
+    using namespace boost::integer;
 }
 
 class GOST34_10 {
     std::string filePath;
+    vector<unsigned char> signature;
     //Elliptic curve coefficients
     const int a = 7;
     BigInteger::cpp_int b{"43308876546767276905765904595650931995942111794451039583252968842033849580414"};
@@ -39,7 +42,6 @@ class GOST34_10 {
 
     //Random generation for BigInteger
     BigInteger::cpp_int RandomBigInteger(const BigInteger::cpp_int& n);
-    std::vector<unsigned char> GetBytesBigInteger(BigInteger::cpp_int value);
 public:
     GOST34_10();
     GOST34_10(std::string filePath);

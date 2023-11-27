@@ -17,26 +17,67 @@ GOST34_10::~GOST34_10() = default;
 
 string GOST34_10::GetSignature() {
     //Step 1
-    BigInteger::cpp_int alpha("297153330664438582545270981670025452388498804319519989524690055046924203387");//BinaryToBigInteger(HexToBinary(GetHash()));
+    BigInteger::cpp_int alpha = BinaryToBigInteger(HexToBinary(GetHash())); //
     //Step 2
     BigInteger::cpp_int e = alpha % q;
     if(e == 0)
         e = 1;
     //Step 3
-    std::vector<unsigned char> result;
     for(BigInteger::cpp_int k, r,s; r == 0 || s == 0;) {
-        k = BigInteger::cpp_int("37811213293344800760307336328815013718816515361317748964192073587060513227392");//RandomBigInteger(q);
+        k = RandomBigInteger(q); //BigInteger::cpp_int("37811213293344800760307336328815013718816515361317748964192073587060513227392");
         ElepticCurvePoint elepticCurvePoint = ElepticCurvePoint::Multiply(k, ElepticCurvePoint(xp, yp, a, b, p));
         r = elepticCurvePoint.x % q;
         s = (r*d + k*e) % q;
-        cout << r << endl;
-        cout << s << endl;
-        std::vector<unsigned char> rBytes = GetBytesBigInteger(r);
-        std::vector<unsigned char> sBytes = GetBytesBigInteger(s);
+        //rBytes
+        std::vector<unsigned char> rBytes;
+        BigInteger::export_bits(r, std::back_inserter(rBytes), 8);
+        //sBytes
+        std::vector<unsigned char> sBytes;
+        BigInteger::export_bits(s, std::back_inserter(sBytes), 8);
+        while(rBytes.size() != (BigInteger::msb(q) + 7) / 8)
+            rBytes.push_back(0);
+        while(sBytes.size() != (BigInteger::msb(q) + 7) / 8)
+            sBytes.push_back(0);
+
+        std::reverse(rBytes.begin(), rBytes.end());
+        std::reverse(sBytes.begin(), sBytes.end());
         rBytes.insert(rBytes.end(),sBytes.begin(), sBytes.end());
-        result = rBytes;
+        signature = rBytes;
     }
-    return "";
+    return string(signature.begin(), signature.end());
+}
+
+bool GOST34_10::IsValid() {
+    vector<unsigned char> rBytes(signature.begin(), signature.begin()+(signature.size() / 2));
+    std::reverse(rBytes.begin(), rBytes.end());
+    BigInteger::cpp_int r;
+    BigInteger::import_bits(r, rBytes.begin(), rBytes.end());
+
+    vector<unsigned char> sBytes(signature.begin()+(signature.size()/2), signature.end());
+    std::reverse(sBytes.begin(), sBytes.end());
+    BigInteger::cpp_int s;
+    BigInteger::import_bits(s, sBytes.begin(), sBytes.end());
+
+    if(r <= 0 || r >= q || s <= 0 || s >= q){
+        return false;
+    }
+
+    BigInteger::cpp_int alpha = BinaryToBigInteger(HexToBinary(GetHash()));
+    BigInteger::cpp_int e = alpha % q;
+    if(e == 0)
+        e = 1;
+
+    BigInteger::cpp_int v = BigInteger::mod_inverse(e, q);
+    BigInteger::cpp_int z1 = s * v % q;
+    BigInteger::cpp_int z2 = -1*r*v % q + q;
+
+    ElepticCurvePoint Q = ElepticCurvePoint::Multiply(d, ElepticCurvePoint(xp, yp, a, b, p));
+    ElepticCurvePoint first = ElepticCurvePoint::Multiply(z1, ElepticCurvePoint(xp, yp, a,b,p));
+    ElepticCurvePoint second = ElepticCurvePoint::Multiply(z2, Q);
+    ElepticCurvePoint C = first + second;
+    BigInteger::cpp_int R = C.x % q;
+
+    return  R == r;
 }
 
 std::string GOST34_10::GetHash() {
@@ -72,8 +113,8 @@ const char* GOST34_10::HexToBinary(char c)
 std::string GOST34_10::HexToBinary(const std::string& hex)
 {
     std::string bin;
-    for(unsigned i = 0; i != hex.length(); ++i)
-        bin += HexToBinary(hex[i]);
+    for(char i : hex)
+        bin += HexToBinary(i);
     return bin;
 }
 
@@ -82,7 +123,6 @@ BigInteger::cpp_int GOST34_10::BinaryToBigInteger(const string &binary) {
     for(int i = binary.size(); i >= 0; i--){
         res+= pow(BigInteger::cpp_int(2),binary.size() - i);
     }
-
     return res;
 }
 
@@ -95,16 +135,4 @@ BigInteger::cpp_int GOST34_10::RandomBigInteger(const boost::multiprecision::cpp
 
     // Генерируем случайное число
     return dist(gen);
-}
-
-std::vector<unsigned char> GOST34_10::GetBytesBigInteger(BigInteger::cpp_int value) {
-    std::size_t byteSize = (BigInteger::msb(value) + 7) / 8;
-    std::vector<unsigned char> result(byteSize);
-
-    for (std::size_t i = 0; i < byteSize; ++i) {
-        unsigned char byte = static_cast<unsigned char>((value >> (i * 8)) & 0xFF);
-        result[i] = byte;
-    }
-
-    return result;
 }
