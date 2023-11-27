@@ -1,3 +1,4 @@
+#include <iostream>
 #include "GOST34_10/GOST34_10.h"
 
 using namespace std;

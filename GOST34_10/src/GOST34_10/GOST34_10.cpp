@@ -7,24 +7,35 @@
 
 GOST34_10::GOST34_10() {
     this->filePath = R"(..\data\input.txt)";
-    pPoint = ElepticCurvePoint(xp,yp,a,b,p);
 }
 
 GOST34_10::GOST34_10(std::string filePath) {
     this->filePath = std::move(filePath);
-    pPoint = ElepticCurvePoint(xp,yp,a,b,p);
 }
 
 GOST34_10::~GOST34_10() = default;
 
 string GOST34_10::GetSignature() {
-    BigInteger alpha = BinaryToBigInteger(HexToBinary(GetHash()));
-    BigInteger e = alpha % q;
-    if(e == to_bigint(0))
+    //Step 1
+    BigInteger::cpp_int alpha("297153330664438582545270981670025452388498804319519989524690055046924203387");//BinaryToBigInteger(HexToBinary(GetHash()));
+    //Step 2
+    BigInteger::cpp_int e = alpha % q;
+    if(e == 0)
         e = 1;
-    BigInteger k = BigInteger::rand_bigint(0,q);
-    ElepticCurvePoint elepticCurvePoint = ElepticCurvePoint::Multiply(k, pPoint);
-    cout << endl;
+    //Step 3
+    std::vector<unsigned char> result;
+    for(BigInteger::cpp_int k, r,s; r == 0 || s == 0;) {
+        k = BigInteger::cpp_int("37811213293344800760307336328815013718816515361317748964192073587060513227392");//RandomBigInteger(q);
+        ElepticCurvePoint elepticCurvePoint = ElepticCurvePoint::Multiply(k, ElepticCurvePoint(xp, yp, a, b, p));
+        r = elepticCurvePoint.x % q;
+        s = (r*d + k*e) % q;
+        cout << r << endl;
+        cout << s << endl;
+        std::vector<unsigned char> rBytes = GetBytesBigInteger(r);
+        std::vector<unsigned char> sBytes = GetBytesBigInteger(s);
+        rBytes.insert(rBytes.end(),sBytes.begin(), sBytes.end());
+        result = rBytes;
+    }
     return "";
 }
 
@@ -66,13 +77,34 @@ std::string GOST34_10::HexToBinary(const std::string& hex)
     return bin;
 }
 
-BigInteger GOST34_10::BinaryToBigInteger(const string &binary) {
-    BigInteger res;
+BigInteger::cpp_int GOST34_10::BinaryToBigInteger(const string &binary) {
+    BigInteger::cpp_int res;
     for(int i = binary.size(); i >= 0; i--){
-        BigInteger value = 2;
-        BigInteger pow = to_string((binary.size() - i));
-        res+= big_pow(value,pow);
+        res+= pow(BigInteger::cpp_int(2),binary.size() - i);
     }
 
     return res;
+}
+
+BigInteger::cpp_int GOST34_10::RandomBigInteger(const boost::multiprecision::cpp_int &n) {
+    // Инициализируем генератор случайных чисел Mersenne Twister
+    boost::random::mt19937 gen(std::random_device{}());
+
+    // Определяем равномерное распределение в диапазоне [0, n)
+    boost::random::uniform_int_distribution<BigInteger::cpp_int> dist(0, n - 1);
+
+    // Генерируем случайное число
+    return dist(gen);
+}
+
+std::vector<unsigned char> GOST34_10::GetBytesBigInteger(BigInteger::cpp_int value) {
+    std::size_t byteSize = (BigInteger::msb(value) + 7) / 8;
+    std::vector<unsigned char> result(byteSize);
+
+    for (std::size_t i = 0; i < byteSize; ++i) {
+        unsigned char byte = static_cast<unsigned char>((value >> (i * 8)) & 0xFF);
+        result[i] = byte;
+    }
+
+    return result;
 }

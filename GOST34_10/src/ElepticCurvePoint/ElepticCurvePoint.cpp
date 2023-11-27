@@ -5,65 +5,42 @@
 #include "ElepticCurvePoint.h"
 
 ElepticCurvePoint::ElepticCurvePoint()
-        : x(BigInteger()), y(BigInteger()), a(BigInteger()), b(BigInteger()), fieldChar(BigInteger()) {}
+        : x(BigInteger::cpp_int()), y(BigInteger::cpp_int()), a(BigInteger::cpp_int()), b(BigInteger::cpp_int()), p(BigInteger::cpp_int()) {}
 
 ElepticCurvePoint::ElepticCurvePoint(const ElepticCurvePoint &point)
-        : x(point.x), y(point.y), a(point.a), b(point.b), fieldChar(point.fieldChar){}
+        : x(point.x), y(point.y), a(point.a), b(point.b), p(point.p){}
 
-ElepticCurvePoint::ElepticCurvePoint(BigInteger x, BigInteger y, BigInteger a, BigInteger b, BigInteger fieldChar){
+ElepticCurvePoint::ElepticCurvePoint(BigInteger::cpp_int x, BigInteger::cpp_int y, BigInteger::cpp_int a, BigInteger::cpp_int b, BigInteger::cpp_int p){
     this->x = x;
     this->y = y;
     this->a = a;
     this->b = b;
-    this->fieldChar = fieldChar;
-}
-
-
-BigInteger ElepticCurvePoint::ModInverse(BigInteger &a, BigInteger m) {
-    BigInteger m0 = m;
-    BigInteger x0 = 0, x1 = 1;
-
-    if (m == to_bigint(1))
-        return 0;
-
-    while (a > to_bigint(1)) {
-        BigInteger q = a / m;
-        BigInteger temp = m;
-        m = a % m;
-        a = temp;
-
-        temp = x0;
-        x0 = x1 - q * x0;
-        x1 = temp;
-    }
-
-    // Нормализация ответа в пределах [0, m0)
-    return (x1 % m0 + m0) % m0;
+    this->p = p;
 }
 
 ElepticCurvePoint operator+(const ElepticCurvePoint &first, const ElepticCurvePoint &second) {
     ElepticCurvePoint p3;
     p3.a = first.a;
     p3.b = first.b;
-    p3.fieldChar = first.fieldChar;
+    p3.p = first.p;
 
-    BigInteger dy = second.y - first.y;
-    BigInteger dx = second.x - first.x;
+    BigInteger::cpp_int dy = second.y - first.y;
+    BigInteger::cpp_int dx = second.x - first.x;
 
     if (dx < 0)
-        dx += first.fieldChar;
+        dx += first.p;
     if (dy < 0)
-        dy += first.fieldChar;
+        dy += first.p;
 
-    BigInteger m = (dy * ElepticCurvePoint::ModInverse(dx, first.fieldChar)) % first.fieldChar;
+    BigInteger::cpp_int m = (dy * BigInteger::mod_inverse(dx, first.p)) % first.p;
     if (m < 0)
-        m += first.fieldChar;
-    p3.x = (m * m - first.x - second.x) % first.fieldChar;
-    p3.y = (m * (first.x - p3.x) - first.y) % first.fieldChar;
+        m += first.p;
+    p3.x = (m * m - first.x - second.x) % first.p;
+    p3.y = (m * (first.x - p3.x) - first.y) % first.p;
     if (p3.x < 0)
-        p3.x += first.fieldChar;
+        p3.x += first.p;
     if (p3.y < 0)
-        p3.y += first.fieldChar;
+        p3.y += first.p;
     return p3;
 }
 
@@ -72,33 +49,34 @@ ElepticCurvePoint ElepticCurvePoint::Double(ElepticCurvePoint &point) {
     ElepticCurvePoint p2;
     p2.a = point.a;
     p2.b = point.b;
-    p2.fieldChar = point.fieldChar;
+    p2.p = point.p;
 
-    BigInteger dy = 3 * point.x * point.x + point.a;
-    BigInteger dx = 2 * point.y;
+    BigInteger::cpp_int dy = 3 * point.x * point.x + point.a;
+    BigInteger::cpp_int dx = 2 * point.y;
 
     if (dx < 0)
-        dx += point.fieldChar;
+        dx += point.p;
     if (dy < 0)
-        dy += point.fieldChar;
+        dy += point.p;
 
-    BigInteger m = dy * ModInverse(dx,point.fieldChar) % point.fieldChar;
-    p2.x = (m * m - point.x - point.x) % point.fieldChar;
-    p2.y = (m * (point.x - p2.x) - point.y) % point.fieldChar;
+    auto mm = BigInteger::mod_inverse(dx,point.p);
+    BigInteger::cpp_int m = dy * mm % point.p;
+    p2.x = (m * m - point.x - point.x) % point.p;
+    p2.y = (m * (point.x - p2.x) - point.y) % point.p;
     if (p2.x < 0)
-        p2.x += point.fieldChar;
+        p2.x += point.p;
     if (p2.y < 0)
-        p2.y += point.fieldChar;
+        p2.y += point.p;
 
     return p2;
 }
 
-ElepticCurvePoint ElepticCurvePoint::Multiply(BigInteger &number, ElepticCurvePoint &point) {
+ElepticCurvePoint ElepticCurvePoint::Multiply(BigInteger::cpp_int number, ElepticCurvePoint point) {
     ElepticCurvePoint temp = point;
-    BigInteger tempX = number - 1;
+    BigInteger::cpp_int tempX = number - 1;
 
     while (tempX != 0) {
-        if ((tempX % to_bigint(2)) != to_bigint(0)) {
+        if ((tempX % 2) != 0) {
             if ((temp.x == point.x) || (temp.y == point.y))
                 temp = Double(temp);
             else
@@ -117,10 +95,10 @@ ElepticCurvePoint &ElepticCurvePoint::operator=(const ElepticCurvePoint &point) 
     this->y = point.y;
     this->a = point.a;
     this->b = point.b;
-    this->fieldChar = fieldChar;
+    this->p = p;
     return *this;
 }
 
-ElepticCurvePoint operator*(BigInteger &k, ElepticCurvePoint &point) {
+ElepticCurvePoint operator*(BigInteger::cpp_int &k, ElepticCurvePoint &point) {
     return ElepticCurvePoint().Multiply(k,point);
 }
