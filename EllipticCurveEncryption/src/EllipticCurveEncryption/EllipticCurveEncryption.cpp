@@ -8,6 +8,12 @@
 
 EllipticCurveEncryption::EllipticCurveEncryption() {
     this->filePath = R"(../data/input.txt)";
+    this->ellipticCurvePoint = EllipticCurvePoint(BigInteger::cpp_int(2),
+                         BigInteger::cpp_int("4018974056539037503335449422937059775635739389905545080690979365213431566280"),
+                         BigInteger::cpp_int(7),
+                         BigInteger::cpp_int("43308876546767276905765904595650931995942111794451039583252968842033849580414"),
+                         BigInteger::cpp_int("57896044618658097711785492504343953926634992332820282019728792003956564821041"));
+
 }
 
 EllipticCurveEncryption::EllipticCurveEncryption(string filePath, EllipticCurvePoint ellipticCurvePoint) {
